@@ -1,0 +1,15 @@
+FROM python:3.12-slim
+
+# Install DuckDB
+RUN pip install duckdb
+
+# Create working directory
+WORKDIR /data
+
+# Copy test files
+COPY *.parquet /data/
+
+# Create test script
+COPY test_bloom_filters.py /data/
+
+CMD ["python", "test_bloom_filters.py"]

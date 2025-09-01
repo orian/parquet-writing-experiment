@@ -5,16 +5,15 @@ use chrono::Utc;
 use parquet::arrow::ArrowWriter;
 use parquet::file::properties::{WriterProperties, EnabledStatistics};
 use parquet::basic::{Compression, ZstdLevel};
-use parquet::schema::types::ColumnPath;
 use rand::prelude::*;
 use std::fs::File;
 use std::sync::Arc;
 use uuid::Uuid;
 
-pub fn generate_parquet_with_bloom_filter(filename: &str, num_rows: usize) -> Result<(), Box<dyn std::error::Error>> {
-    println!("Generating {} rows of sample data...", num_rows);
+pub fn generate_parquet_without_bloom_filter(filename: &str, num_rows: usize) -> Result<(), Box<dyn std::error::Error>> {
+    println!("Generating {} rows of sample data (NO Bloom filters)...", num_rows);
     
-    // Generate sample data
+    // Generate sample data (identical to bloom version)
     let mut rng = rand::rng();
     let now = Utc::now();
     
@@ -94,14 +93,13 @@ pub fn generate_parquet_with_bloom_filter(filename: &str, num_rows: usize) -> Re
         ],
     )?;
     
-    println!("Configuring Parquet writer with Bloom filters...");
+    println!("Configuring Parquet writer WITHOUT Bloom filters...");
     
-    // Create writer properties with Bloom filter ONLY for distinct_id column
+    // Create writer properties WITHOUT Bloom filters
     let props = WriterProperties::builder()
         .set_compression(Compression::ZSTD(ZstdLevel::try_new(9).unwrap()))
         .set_statistics_enabled(EnabledStatistics::Chunk)
-        .set_bloom_filter_enabled(false)  // Disable global Bloom filters
-        .set_column_bloom_filter_enabled(ColumnPath::from("distinct_id"), true)  // Enable only for distinct_id
+        .set_bloom_filter_enabled(false)  // Explicitly disable Bloom filters
         .build();
     
     // Create output file
@@ -109,7 +107,7 @@ pub fn generate_parquet_with_bloom_filter(filename: &str, num_rows: usize) -> Re
     
     println!("Writing Parquet file...");
     
-    // Create Arrow writer with Bloom filter properties
+    // Create Arrow writer
     let mut writer = ArrowWriter::try_new(file, Arc::new(schema), Some(props))?;
     
     // Write the record batch
@@ -118,9 +116,8 @@ pub fn generate_parquet_with_bloom_filter(filename: &str, num_rows: usize) -> Re
     // Close writer
     writer.close()?;
     
-    println!("✅ Created {} with {} rows", filename, num_rows);
+    println!("✅ Created {} with {} rows (NO Bloom filters)", filename, num_rows);
     println!("Columns: team_id (int64), timestamp (timestamp), event (string), distinct_id (string), properties (string)");
-    println!("✅ Bloom filter enabled for distinct_id column!");
     
     Ok(())
 }
