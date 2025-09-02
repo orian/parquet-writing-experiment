@@ -230,11 +230,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             let chunk_details = format!(
-                "Column '{}' ({:?}, {:?}) @ offset {} | Size: {} -> {} ({} values){}{}",
+                "Column '{}' ({:?}, {:?}) @ file offset {}, data offset {} | Size: {} -> {} ({} values){}{}",
                 column.column_path(),
                 column.column_type(),
                 column.compression(),
                 column.file_offset(),
+                column.data_page_offset(),
                 uncompressed_size_str,
                 compressed_size_str,
                 column.num_values(),
