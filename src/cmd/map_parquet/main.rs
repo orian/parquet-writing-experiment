@@ -218,8 +218,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 "".to_string()
             };
 
+            // Check for Bloom filter information
+            let bloom_info = if let Some(bloom_offset) = column.bloom_filter_offset() {
+                if let Some(bloom_length) = column.bloom_filter_length() {
+                    format!(" | Bloom({} @ {})", format_bytes(bloom_length as u64), bloom_offset)
+                } else {
+                    format!(" | Bloom(@ {})", bloom_offset)
+                }
+            } else {
+                "".to_string()
+            };
+
             let chunk_details = format!(
-                "Column '{}' ({:?}, {:?}) @ offset {} | Size: {} -> {} ({} values){}",
+                "Column '{}' ({:?}, {:?}) @ offset {} | Size: {} -> {} ({} values){}{}",
                 column.column_path(),
                 column.column_type(),
                 column.compression(),
@@ -227,7 +238,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 uncompressed_size_str,
                 compressed_size_str,
                 column.num_values(),
-                stats_str
+                stats_str,
+                bloom_info
             );
             println!(
                 "{}{} 📊 Column Chunk: {}",
